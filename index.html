@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>运营 Codex 工作流资产库</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #16202a;
+      --muted: #667085;
+      --line: #d9dee8;
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --blue: #1f63d3;
+      --green: #157a55;
+      --amber: #9a6200;
+      --rose: #b42318;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); }
+    button, input, select, textarea { font: inherit; }
+    a { color: inherit; }
+    .shell { max-width: 1240px; margin: 0 auto; padding: 24px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .mark { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 8px; background: #172554; color: white; font-weight: 800; }
+    .eyebrow { margin: 0 0 4px; color: var(--blue); font-size: 12px; font-weight: 700; letter-spacing: 0; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 0; font-size: 24px; }
+    h2 { font-size: 22px; line-height: 1.35; }
+    h3 { font-size: 16px; }
+    .pill { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; color: var(--muted); background: white; font-size: 13px; }
+    .hero { display: grid; grid-template-columns: 1.3fr .7fr; gap: 16px; align-items: stretch; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+    .hero p, .panel p { color: var(--muted); line-height: 1.65; }
+    .quick { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 10px; margin-top: 16px; align-items: end; }
+    label span { display: block; margin-bottom: 6px; color: #344054; font-size: 13px; font-weight: 650; }
+    input, select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 10px 11px; background: white; color: var(--ink); }
+    textarea { min-height: 170px; resize: vertical; line-height: 1.55; }
+    .btn { border: 0; border-radius: 6px; padding: 10px 13px; background: var(--blue); color: white; cursor: pointer; white-space: nowrap; }
+    .btn.secondary { border: 1px solid var(--line); background: white; color: var(--ink); }
+    .btn.green { background: var(--green); }
+    .btn.amber { background: var(--amber); }
+    .btn:disabled { opacity: .55; cursor: default; }
+    .steps { display: grid; gap: 10px; }
+    .step { border-left: 3px solid var(--blue); padding: 10px 12px; background: #f7faff; border-radius: 6px; }
+    .grid { display: grid; grid-template-columns: 280px 1fr 360px; gap: 16px; margin-top: 16px; align-items: start; }
+    .filters { display: grid; gap: 12px; position: sticky; top: 16px; }
+    .asset-list { display: grid; gap: 12px; }
+    .asset { text-align: left; width: 100%; border: 1px solid var(--line); background: white; border-radius: 8px; padding: 14px; cursor: pointer; }
+    .asset.active { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(31, 99, 211, .12); }
+    .meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .tag { border: 1px solid #d6e0f5; background: #f4f7ff; color: #243b75; border-radius: 999px; padding: 4px 8px; font-size: 12px; }
+    .tag.status { border-color: #cfe8dc; background: #f2fbf6; color: var(--green); }
+    .detail { position: sticky; top: 16px; }
+    .detail-section { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+    .detail ul { padding-left: 20px; color: var(--muted); line-height: 1.7; }
+    .upload { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+    .output { margin-top: 16px; display: none; }
+    .output.show { display: block; }
+    .notice { border: 1px solid #f5d28b; background: #fff8e7; color: #5f3d00; border-radius: 8px; padding: 12px; margin-top: 12px; line-height: 1.6; }
+    .status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .status-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: white; }
+    .empty { color: var(--muted); padding: 20px; text-align: center; border: 1px dashed var(--line); border-radius: 8px; }
+    @media (max-width: 980px) {
+      .hero, .grid, .quick, .upload, .status-grid { grid-template-columns: 1fr; }
+      .filters, .detail { position: static; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">OC</div>
+        <div>
+          <p class="eyebrow">运营内部测试版</p>
+          <h1>Codex 工作流资产库</h1>
+        </div>
+      </div>
+      <a class="pill" id="feishuTopLink" target="_blank" rel="noreferrer">打开飞书投稿表</a>
+    </header>
+
+    <section class="hero">
+      <div class="panel">
+        <p class="eyebrow">从这里开始</p>
+        <h2>你只需要说：我是什么岗位，遇到什么问题。让 Codex 自动来这里找工具、skill、SOP 和同类任务限制。</h2>
+        <p>这个测试版先给同事验证“能不能查到、能不能投稿、能不能按边界复用”。同事上传内容统一进飞书表，审核通过后再沉淀到可安装资产。</p>
+        <div class="quick">
+          <label><span>我的岗位</span><input id="roleInput" value="短视频运营" /></label>
+          <label><span>我要解决的问题</span><input id="taskInput" value="Flova 生成卡住" /></label>
+          <button class="btn" id="copyFind">复制给 Codex</button>
+        </div>
+      </div>
+      <div class="panel steps">
+        <div class="step"><strong>01 说岗位和问题</strong><p>不用先逛网站，直接让 Codex 查。</p></div>
+        <div class="step"><strong>02 Codex 筛选资产</strong><p>按任务、岗位、工具、卡点和人工边界匹配。</p></div>
+        <div class="step"><strong>03 投稿走飞书</strong><p>同事有好东西，复制投稿提示后填入飞书表。</p></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="eyebrow">同事上传 Skill / 工具 / 链接</p>
+      <h2>有好用的 skill、工具、小脚本、链接或本地化经验，先让 Codex 整理，再填进飞书表。</h2>
+      <div class="upload">
+        <label><span>名称</span><input id="toolTitle" placeholder="例如：Flova 本地化 skill" /></label>
+        <label><span>链接或位置</span><input id="toolUrl" placeholder="https://... 或本地路径说明" /></label>
+        <label><span>适用岗位</span><input id="toolRole" placeholder="例如：矩阵号运营" /></label>
+        <button class="btn green" id="copySubmit">复制投稿提示</button>
+      </div>
+      <div class="notice">飞书表权限已设置为组织内获得链接的人可编辑。当前测试阶段，网站本身不直接写数据库，投稿先进入飞书多维表格，避免未审核内容直接发布。</div>
+    </section>
+
+    <section class="status-grid" id="statusGrid"></section>
+
+    <section class="grid">
+      <aside class="panel filters">
+        <label><span>搜索</span><input id="searchInput" placeholder="Flova、周报、飞书、剧情..." /></label>
+        <label><span>岗位</span><select id="roleFilter"></select></label>
+        <label><span>类型</span><select id="typeFilter"></select></label>
+        <button class="btn secondary" id="resetFilters">重置筛选</button>
+      </aside>
+      <section class="asset-list" id="assetList"></section>
+      <aside class="panel detail" id="detailPanel"></aside>
+    </section>
+
+    <section class="panel output" id="outputPanel">
+      <p class="eyebrow" id="outputKicker">已生成内容</p>
+      <h2 id="outputTitle">把下面内容发给 Codex</h2>
+      <textarea id="outputText" readonly></textarea>
+    </section>
+  </main>
+
+  <script>
+    const DATA = {"assets":[{"id":"flova-queue-fast-path","title":"Flova 前端队列三门禁快路径","status":"已审核","visibility":"内部","role":"短视频运营","assetType":"SOP","tools":["Codex","Flova","Chrome","Feishu"],"tasks":["视频素材生成","页面自动化止损"],"outcomes":["手动接管文件","待人工验收下载"],"painPoints":["Flova 页面超时","重复读取项目浪费时间","页面状态文本滞后"],"tags":["Flova","矩阵号","快路径","三门禁"],"summary":"从 latest.json 和 run JSON 出发，按 Queue gate、Eligibility gate、Flova gate 推进，减少重复读代码和重度浏览器排查。","inputs":["outputs/flova-runs/latest.json","run JSON 中的 flovaPrompt","账号表达记忆"],"workflow":["Queue gate：先读取 latest.json 和被引用的 run JSON。","Eligibility gate：只检查目标账号是否满足生产条件和表达记忆约束。","Flova gate：只对 ready 项做一次轻量 prompt 粘贴、提交和最小状态确认。","首次 Chrome/Flova 交互超时后，保存手动提示文件并标记需人工介入。"],"failureModes":["Chrome/Flova 首次轻量交互超时后不继续重试截图、DOM 和坐标路径。"],"boundary":"默认停在视频素材或可预览状态，不自动下载，不替代人工验收。","feishuFields":["日期","账号","每日视频序号","生产状态","下载/验收状态","手动接管文件"],"updatedAt":"2026-06-07","owner":"李忆超"},{"id":"daily-video-task-generator","title":"每日视频任务生成与飞书写入前预检","status":"已审核","visibility":"内部","role":"矩阵号运营","assetType":"脚本","tools":["Codex","Node.js","Feishu"],"tasks":["每日任务生成","飞书同步预检"],"outcomes":["待写入任务清单","网络阻塞提示"],"painPoints":["Feishu 网络不可达","低配额同步失败","任务状态边界混乱"],"tags":["Feishu","每日任务","预检","低配额"],"summary":"先 dry-run 生成任务，再按网络、凭证、字段结构拆分阻塞原因，避免在飞书不可达时误判脚本逻辑。","inputs":["日期","热点驱动账号配置","Feishu 多维表格字段"],"workflow":["先执行 dry-run，确认当天任务候选和账号筛选结果。","只处理生产模式为热点驱动且进入热点池的账号。","写入前先判断 open.feishu.cn 是否可达。","网络不可用时输出友好提示，保留本地验证结果，不进行 live read/write。"],"failureModes":["DNS 或网络不可达时不要继续调试凭证和字段结构。"],"boundary":"不能凭旧导出猜测当天 Feishu 记录；网络恢复后重新执行同一路径。","feishuFields":["日期","账号","每日视频序号","剧情目标","镜头结构","Flova生成指令"],"updatedAt":"2026-06-03","owner":"李忆超"},{"id":"account-expression-memory-loop","title":"账号表达记忆闭环","status":"已审核","visibility":"内部","role":"矩阵号运营","assetType":"岗位方法","tools":["Codex","Markdown","Flova"],"tasks":["账号定位复用","提示词防漂移"],"outcomes":["账号表达约束","质量复盘记录"],"painPoints":["提示词越跑越散","账号疲劳点没有沉淀","复盘不进入下一轮执行"],"tags":["账号记忆","Flova","质量闭环"],"summary":"每次执行前读取账号表达记忆，执行后把质量、定位、提示词、审核风险和边界观察写回同一位置。","inputs":["docs/账号表达记忆.md","本轮 Flova 执行结果","人工验收意见"],"workflow":["执行前读取目标账号的表达记忆。","把记忆翻译成具体的写作约束、禁用点和停止边界。","执行后写回本轮观察，尤其是疲劳点、提示词漂移和审核风险。","下一轮任务必须先读取更新后的记忆。"],"failureModes":["如果只写一次性提示词而不回写记忆，下一轮会重复踩坑。"],"boundary":"只写和未来生产质量直接相关的观察，不把无关聊天记录塞进账号记忆。","feishuFields":["账号","表达约束","禁用点","质量观察","审核风险","生产边界"],"updatedAt":"2026-06-02","owner":"李忆超"},{"id":"weekly-report-polish","title":"运营周报飞书汇报措辞","status":"已审核","visibility":"内部","role":"运营管理","assetType":"提示词包","tools":["Codex","Feishu"],"tasks":["周报整理","汇报措辞"],"outcomes":["可粘贴周报","周二到周一排期表"],"painPoints":["目标不够数字化","复盘不够像结论","规划没有排期"],"tags":["周报","飞书","汇报","排期"],"summary":"把目标写成数字，把复盘写成结论，把规划写成排期，输出能直接粘贴进飞书的中文版本。","inputs":["本周工作记录","下周规划","已有飞书表格结构"],"workflow":["先把目标改成可衡量数字。","再把复盘压缩成结论，不写流水账。","最后把下周事项补成周二到周一的排期表。"],"failureModes":["业务数字缺失时标出缺口，不虚构结果。"],"boundary":"不替团队承诺未经确认的目标和日期。","feishuFields":["本周目标","完成情况","复盘结论","下周规划","负责人"],"updatedAt":"2026-06-02","owner":"李忆超"},{"id":"japan-matrix-audience-gate","title":"日本矩阵号剧情前置判断门","status":"已审核","visibility":"内部","role":"剧情号运营","assetType":"SOP","tools":["Codex","Flova"],"tasks":["剧情方向判断","受众情绪判断"],"outcomes":["剧情方向建议","停止点确认"],"painPoints":["直接写剧情导致方向偏","没有先判断受众和情绪钩子"],"tags":["日本矩阵号","剧情","受众判断"],"summary":"新剧情生成前先判断受众、情绪钩子、节奏和表达方式，确认方向后再进入正式剧情。","inputs":["近期成功案例","账号定位","目标主题"],"workflow":["先阅读近期成功案例和用户既有执行方式。","判断受众、剧情方向、情绪钩子和节奏。","在判断阶段停止，等待用户确认是否继续写正式剧情。"],"failureModes":["跳过前置判断会导致格式和节奏不贴合已有 SOP。"],"boundary":"用户没有明确要求继续时，不直接生成完整剧情。","feishuFields":["账号","主题","受众判断","剧情方向","是否进入剧情生成"],"updatedAt":"2026-05-29","owner":"李忆超"},{"id":"capcut-edit-decision-list","title":"教程脚本转剪映执行清单","status":"已审核","visibility":"内部","role":"教程内容运营","assetType":"SOP","tools":["Codex","剪映","CapCut"],"tasks":["教程剪辑规划","字幕和重点标注"],"outcomes":["剪辑决策表","字幕检查清单"],"painPoints":["录屏素材没有剪辑路径","字幕断句影响理解"],"tags":["剪映","教程","字幕","EDL"],"summary":"把教程脚本拆成时间线、屏幕动作、字幕、强调点和导出检查项，交给剪辑阶段使用。","inputs":["教程脚本","录屏素材列表","目标平台"],"workflow":["按章节拆分脚本和屏幕动作。","标记缩放点、重点框选、字幕断句和音效时机。","输出剪映可照着执行的编辑决策清单。"],"failureModes":["没有素材文件名时先用占位名，剪辑前再替换。"],"boundary":"不替代最终人工观感检查。","feishuFields":["选题","脚本链接","素材状态","剪辑清单","字幕状态"],"updatedAt":"2026-05-28","owner":"李忆超"},{"id":"codex-skill-retrospective","title":"任务完成后沉淀流程最优解 Skill","status":"已审核","visibility":"内部","role":"运营全员","assetType":"Skill 草稿","tools":["Codex","Feishu"],"tasks":["任务复盘","Skill 草稿生成"],"outcomes":["SKILL.md 草稿","岗位复用说明"],"painPoints":["一次性任务没有沉淀","同事不知道怎么复用 Codex 方法"],"tags":["Codex","Skill","复盘","沉淀"],"summary":"任务完成后，让 Codex 把真实执行步骤、输入输出、卡点、人工边界整理成可审核的 skill 草稿。","inputs":["任务目标","执行记录","最终产出","失败和止损点"],"workflow":["让 Codex 回顾本次任务的输入、执行路径、验证方式和产出。","按工作流资产字段补齐岗位、工具、任务、卡点、边界。","生成 SKILL.md 草稿，但先进入人工审核。"],"failureModes":["不得把账号、路径、凭证或客户信息直接写进公开草稿。"],"boundary":"Skill 草稿必须经审核人确认后才能进入内部可安装区。","feishuFields":["资产标题","岗位","工具","卡点","复用步骤","是否可生成Skill","审核状态"],"updatedAt":"2026-06-08","owner":"李忆超"}],"submissions":[{"id":"submission-seed-001","source":"teammate-codex","title":"竞品广告拆解提示词包","submitter":"Codex-运营同事-D","status":"待审核","createdAt":"2026-06-08 19:40","summary":"把竞品广告链接整理成卖点、镜头、钩子和可复用脚本。"}],"launchReadiness":{"purpose":"内部同事联调验证","currentAccess":{"status":"本地演示","message":"当前测试站用于内部联调。同事不能用自己的 本地演示地址 看到同一份网站。要和同事验证，需要先部署一个内部测试 URL，并接同一份共享数据。"},"items":[{"id":"shared-url","title":"同事能访问同一个测试站","status":"待验证","owner":"你 + 1 位同事","check":"把网站部署到一个内部测试 URL，同事用自己的电脑和飞书账号打开。","pass":"同事能登录、能看到共享投稿池和已审核资产。"},{"id":"submission-sync","title":"投稿同步验证","status":"待验证","owner":"2 位运营同事","check":"A 同事上传一个 skill 或工具，B 同事刷新投稿池。","pass":"B 同事能在 2 分钟内看到 A 的投稿。"},{"id":"codex-search-install","title":"Codex 搜索与安装验证","status":"待验证","owner":"2 位岗位不同的同事","check":"同事只说岗位和问题，让 Codex 自动筛选、解释匹配原因，并安装或给出复用步骤。","pass":"同事不浏览列表也能找到可用资产。"},{"id":"cross-review","title":"交叉审核验证","status":"待验证","owner":"2 个同事 Codex","check":"对同一条投稿跑 2 次交叉审核，检查敏感信息、适用岗位、可安装性和人工边界。","pass":"审核结果能阻止敏感或不完整投稿直接发布。"},{"id":"permission-boundary","title":"权限边界验证","status":"待验证","owner":"你 + 管理员","check":"未登录、非运营成员、普通运营成员分别访问网站和 API。","pass":"未授权用户不能看到内部资产和原始投稿内容。"},{"id":"operation-dry-run","title":"完整工作流试跑","status":"待验证","owner":"你 + 2 位同事","check":"用 3 个真实资产完成一次投稿、一次搜索、一次审核、一次本地安装或复用。","pass":"同事不需要你手把手解释，也能跑完核心流程。"}],"summary":{"total":6,"done":0,"remaining":6,"label":"6 项待验证"}},"reviewSchedule":{"recommendedMode":"三段式审核","dailyBatchTime":"20:00","requiredApprovals":2,"publishRule":"至少 2 个同事 Codex 审核通过，且没有敏感信息标记，才进入可发布资产库。","triggers":[{"id":"upload-precheck","name":"上传即初审","when":"上传后立刻执行","executor":"投稿人的 Codex 或网站后端","purpose":"检查字段是否完整、是否明显包含账号密码 token 客户信息或私有路径。","result":"通过后进入共享投稿池；有明显风险则标记为需补充或敏感拦截。"},{"id":"daily-cross-review","name":"晚间批量交叉审核","when":"每天 20:00 自动执行","executor":"运营部 2 个以上同事 Codex","purpose":"从岗位匹配、任务匹配、可复用性、安装边界和敏感信息角度做正式交叉审核。","result":"达到发布条件后转入已审核资产；不通过则退回投稿池补充。"},{"id":"install-time-review","name":"使用前补审","when":"同事准备安装或复用前，如果审核不足则执行","executor":"调用者的 Codex 加 1 个同事 Codex","purpose":"避免未审核资产被直接安装到本地 Codex。","result":"补齐审核后再允许安装；仍不足时只展示投稿摘要，不给安装动作。"}]},"syncState":{"source":"飞书多维表格","approvedCount":7,"pendingCount":1,"lastSync":"2026-06-08 18:30"},"feishuSubmissionUrl":"https://flova-team.feishu.cn/wiki/EIiMws2CoiJD0fkBjV4cldM2nFc?from=from_copylink","updatedAt":"2026-06-08 20:00"};
+    const state = { query: '', role: '全部', type: '全部', selected: DATA.assets[0]?.id || null };
+    const el = (id) => document.getElementById(id);
+    const join = (arr) => Array.isArray(arr) && arr.length ? arr.join('、') : '未填写';
+    const unique = (items) => ['全部'].concat([...new Set(items.filter(Boolean))]);
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+    function promptFind(role, task) {
+      return [
+        '请读取运营部 Codex 工作流资产库测试站：',
+        location.href,
+        '',
+        '我的岗位：' + (role || '请根据我的描述判断'),
+        '我要解决的问题：' + (task || '请根据我的描述判断任务'),
+        '',
+        '请自动筛选最匹配的工具、skill、SOP、提示词包和类似任务限制，按匹配度排序。',
+        '先说明为什么匹配，再告诉我怎么安装或复用到本地 Codex。',
+        '安装前检查人工边界、敏感信息、输入材料、失败处理。',
+        '如果没有合适资产，请帮我整理一个新的工作流资产投稿草稿。'
+      ].join('\n');
+    }
+
+    function promptSubmit() {
+      return [
+        '请把这个 skill、工具、小脚本、链接或本地化经验整理成运营部工作流资产投稿。',
+        '',
+        '名称：' + (el('toolTitle').value.trim() || '请根据链接判断'),
+        '链接或位置：' + (el('toolUrl').value.trim() || '请粘贴工具、文档链接或本地位置说明'),
+        '适用岗位：' + (el('toolRole').value.trim() || '请根据用途判断'),
+        '',
+        '请整理后填写到飞书联调表：' + DATA.feishuSubmissionUrl,
+        '',
+        '请按这些字段整理：资产标题、适用岗位、资产类型、工具链接或本地位置、解决任务、适合场景、输入材料、使用步骤、产出结果、卡点、失败处理、人工边界、是否可生成 Skill、是否包含敏感信息。',
+        '提交前请检查：不要包含账号、密码、token、客户信息、公司私有路径、未授权飞书链接。'
+      ].join('\n');
+    }
+
+    function promptInstall(asset) {
+      return [
+        '请帮我复用这条运营部 Codex 工作流资产。',
+        '',
+        '资产标题：' + asset.title,
+        '岗位：' + asset.role,
+        '类型：' + asset.assetType,
+        '工具：' + join(asset.tools),
+        '解决任务：' + join(asset.tasks),
+        '卡点：' + join(asset.painPoints),
+        '输入材料：' + join(asset.inputs || asset.codexUse?.requiredInputs),
+        '人工边界：' + (asset.boundary || asset.codexUse?.humanBoundary || '请先判断'),
+        '',
+        '请先判断我本地环境是否适合安装或复用。适合的话，帮我生成安装步骤或本地 skill 草稿；不适合的话，给我替代执行方案。'
+      ].join('\n');
+    }
+
+    async function showOutput(title, text) {
+      el('outputTitle').textContent = title;
+      el('outputText').value = text;
+      el('outputPanel').classList.add('show');
+      try { await navigator.clipboard.writeText(text); } catch {}
+      el('outputPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function matches(asset) {
+      const q = state.query.trim().toLowerCase();
+      const haystack = [asset.title, asset.role, asset.assetType, asset.summary, join(asset.tools), join(asset.tasks), join(asset.tags), join(asset.painPoints)].join(' ').toLowerCase();
+      return (!q || haystack.includes(q)) && (state.role === '全部' || asset.role === state.role) && (state.type === '全部' || asset.assetType === state.type);
+    }
+
+    function renderFilters() {
+      const roles = unique(DATA.assets.map((a) => a.role));
+      const types = unique(DATA.assets.map((a) => a.assetType));
+      el('roleFilter').innerHTML = roles.map((role) => '<option>' + escapeHtml(role) + '</option>').join('');
+      el('typeFilter').innerHTML = types.map((type) => '<option>' + escapeHtml(type) + '</option>').join('');
+      el('roleFilter').value = state.role;
+      el('typeFilter').value = state.type;
+    }
+
+    function renderStatus() {
+      const sync = DATA.syncState || {};
+      const readiness = DATA.launchReadiness?.summary;
+      const review = DATA.reviewSchedule || {};
+      el('statusGrid').innerHTML = [
+        ['资产数量', DATA.assets.length + ' 条已审核资产', '来自静态测试站和飞书联调表'],
+        ['投稿后台', '飞书多维表格', '同事可编辑，先审核再发布'],
+        ['交叉审核', review.recommendedMode || '三段式审核', '建议每天 ' + (review.dailyBatchTime || '20:00') + ' 批量审核'],
+        ['同步状态', (sync.approvedCount || DATA.assets.length) + ' 已审核 / ' + (sync.pendingCount || DATA.submissions.length || 0) + ' 待审核', '当前更新时间：' + DATA.updatedAt],
+        ['验证进度', readiness ? readiness.label : '待验证', '先找 2-3 位同事跑通'],
+        ['飞书权限', '组织内链接可编辑', '投稿和修改都进同一张表']
+      ].map(([name, value, note]) => '<div class="status-card"><p class="eyebrow">' + escapeHtml(name) + '</p><h3>' + escapeHtml(value) + '</h3><p>' + escapeHtml(note) + '</p></div>').join('');
+    }
+
+    function renderAssets() {
+      const list = DATA.assets.filter(matches);
+      if (!list.some((asset) => asset.id === state.selected)) state.selected = list[0]?.id || null;
+      el('assetList').innerHTML = list.length ? list.map((asset) => {
+        const active = asset.id === state.selected ? ' active' : '';
+        return '<button class="asset' + active + '" data-id="' + escapeHtml(asset.id) + '">' +
+          '<p class="eyebrow">' + escapeHtml(asset.role) + ' / ' + escapeHtml(asset.assetType) + '</p>' +
+          '<h3>' + escapeHtml(asset.title) + '</h3>' +
+          '<p>' + escapeHtml(asset.summary) + '</p>' +
+          '<div class="meta"><span class="tag status">' + escapeHtml(asset.status || '已审核') + '</span>' +
+          (asset.tags || []).slice(0, 4).map((tag) => '<span class="tag">' + escapeHtml(tag) + '</span>').join('') +
+          '</div></button>';
+      }).join('') : '<div class="empty">没有匹配资产。可以复制投稿提示，让 Codex 帮你沉淀一条新资产。</div>';
+      document.querySelectorAll('.asset').forEach((node) => {
+        node.addEventListener('click', () => { state.selected = node.dataset.id; renderAssets(); renderDetail(); });
+      });
+      renderDetail();
+    }
+
+    function renderDetail() {
+      const asset = DATA.assets.find((item) => item.id === state.selected);
+      if (!asset) {
+        el('detailPanel').innerHTML = '<div class="empty">请选择一条资产。</div>';
+        return;
+      }
+      const workflow = asset.workflow || [];
+      const inputs = asset.inputs || asset.codexUse?.requiredInputs || [];
+      el('detailPanel').innerHTML = '<p class="eyebrow">资产详情</p><h2>' + escapeHtml(asset.title) + '</h2>' +
+        '<p>' + escapeHtml(asset.summary) + '</p>' +
+        '<div class="meta"><span class="tag">' + escapeHtml(asset.role) + '</span><span class="tag">' + escapeHtml(asset.assetType) + '</span><span class="tag">' + escapeHtml(join(asset.tools)) + '</span></div>' +
+        '<div class="detail-section"><h3>输入材料</h3><ul>' + inputs.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul></div>' +
+        '<div class="detail-section"><h3>执行步骤</h3><ul>' + workflow.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul></div>' +
+        '<div class="detail-section"><h3>人工边界</h3><p>' + escapeHtml(asset.boundary || asset.codexUse?.humanBoundary || '使用前让 Codex 先判断。') + '</p></div>' +
+        '<button class="btn" id="copyInstall">复制复用提示</button> ' +
+        '<a class="btn secondary" href="' + escapeHtml(DATA.feishuSubmissionUrl) + '" target="_blank" rel="noreferrer">打开飞书表</a>';
+      el('copyInstall').addEventListener('click', () => showOutput('把这段发给 Codex 复用资产', promptInstall(asset)));
+    }
+
+    function init() {
+      el('feishuTopLink').href = DATA.feishuSubmissionUrl;
+      renderFilters();
+      renderStatus();
+      renderAssets();
+      el('searchInput').addEventListener('input', (event) => { state.query = event.target.value; renderAssets(); });
+      el('roleFilter').addEventListener('change', (event) => { state.role = event.target.value; renderAssets(); });
+      el('typeFilter').addEventListener('change', (event) => { state.type = event.target.value; renderAssets(); });
+      el('resetFilters').addEventListener('click', () => { state.query = ''; state.role = '全部'; state.type = '全部'; el('searchInput').value = ''; renderFilters(); renderAssets(); });
+      el('copyFind').addEventListener('click', () => showOutput('把这段发给 Codex 查库', promptFind(el('roleInput').value.trim(), el('taskInput').value.trim())));
+      el('copySubmit').addEventListener('click', () => showOutput('把这段发给 Codex 整理投稿', promptSubmit()));
+    }
+    init();
+  </script>
+</body>
+</html>
